@@ -1,0 +1,44 @@
+/* Plain, 90s-flavored styling: system fonts, a bordered form, no frills. */
+body {
+    font-family: Verdana, Geneva, sans-serif;
+    font-size: 14px;
+    color: #000;
+    background: #ffffff;
+    margin: 24px;
+    max-width: 640px;
+}
+h1 {
+    font-size: 20px;
+    border-bottom: 2px solid #000;
+    padding-bottom: 4px;
+}
+p { line-height: 1.4; }
+table {
+    border-collapse: collapse;
+    background: #f4f4f4;
+    border: 1px solid #888;
+    margin: 12px 0;
+}
+th, td {
+    border: 1px solid #cccccc;
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+}
+th {
+    background: #e0e0e0;
+    white-space: nowrap;
+    width: 110px;
+}
+label { margin-right: 12px; }
+select { font-size: 14px; }
+.hint { color: #666; }
+button {
+    font-size: 15px;
+    padding: 5px 16px;
+    border: 1px solid #333;
+    background: #dcdcdc;
+    cursor: pointer;
+}
+button:hover { background: #cfcfcf; }
+a { color: #00309a; }

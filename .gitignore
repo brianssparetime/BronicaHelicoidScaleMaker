@@ -1,0 +1,14 @@
+design_docs/
+CLAUDE.md
+.claude/
+.venv/
+__pycache__/
+*.pyc
+out/
+.pytest_cache/
+img-processed/
+*.pdf
+*.dxf
+!img/**
+.DS_Store
+**/.DS_Store

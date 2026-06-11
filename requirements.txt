@@ -1,0 +1,5 @@
+# Runtime dependencies.
+# The core (optics, geometry, marks, model) and the DXF writer use only the
+# standard library; these cover PDF output and the local web server.
+fpdf2>=2.8
+bottle>=0.13
