@@ -4,11 +4,12 @@
 Run: python web.py  (serves http://localhost:8080)
 
 The command line writes files to disk; the web streams them as attachments and
-keeps nothing on the server. A serverless handler calling the same core would
-replace Bottle on a deployment target.
+keeps nothing on the server. ``app`` is a plain WSGI callable, so a host like
+PythonAnywhere imports it directly with no rewrite.
 """
 
 import io
+import os
 import zipfile
 
 from bottle import Bottle, request, response, static_file
@@ -20,6 +21,8 @@ from scale_strip.render_pdf import render_pdf
 from scale_strip.units import Unit
 
 app = Bottle()
+
+_STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
 _FOCAL_OPTIONS = "".join(
     f'<option value="{f}">{f}</option>' for f in config.FOCAL_LENGTHS_MM
@@ -71,7 +74,7 @@ def index():
 
 @app.get("/static/<name>")
 def static(name):
-    return static_file(name, root="static")
+    return static_file(name, root=_STATIC_DIR)
 
 
 @app.post("/generate")
