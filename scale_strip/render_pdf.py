@@ -13,46 +13,62 @@ from .model import MarkKind, StripModel
 
 # Page placement and element sizes, all millimeters except font size in points.
 _MARGIN_TOP_MM = 22.0
+_STRIP_GAP_MM = 8.0      # blank band between stacked strips
+_ROW_MARGIN_MM = 0.3     # blank band at the strip's top and bottom edges
 _DOT_R_MM = 0.32
 _INF_R_MM = 0.42
 _LABEL_GAP_MM = 0.7      # dot to its number
-_FONT_PT = 4.2           # ~1.5 mm text
+_MAX_MARK_MM = 3.2       # cap on mark-number height (one row would exceed it)
 _LEGEND_FONT_PT = 5.0
+_PT_PER_MM = 2.83465
 
 _PAGE_W = {"letter": 279.4, "a4": 297.0}
 
 
-def render_pdf(model: StripModel, page: str = "letter") -> bytes:
+def render_pdf(models, page: str = "letter") -> bytes:
+    """Render one or more strips onto a single page.
+
+    ``models`` is a ``StripModel`` or a list of them. Each becomes a strip,
+    stacked down the page with one calibration block below. The website puts a
+    focus strip and the debug strip together this way.
+    """
+    if isinstance(models, StripModel):
+        models = [models]
     pdf = FPDF(orientation="L", unit="mm", format=page)
     pdf.set_auto_page_break(False)
     pdf.add_page()
     pdf.set_line_width(0.15)
 
-    margin_x = (_PAGE_W.get(page, _PAGE_W["letter"]) - model.outline.length_mm) / 2.0
+    margin_x = (_PAGE_W.get(page, _PAGE_W["letter"]) - models[0].outline.length_mm) / 2.0
+    _draw_title(pdf, models, margin_x)
+
     top = _MARGIN_TOP_MM
+    for model in models:
+        _draw_strip(pdf, model, margin_x, top)
+        top += model.outline.width_mm + _STRIP_GAP_MM
 
-    def px(x):  # model x to page x
-        return margin_x + x
+    # The calibration block sits off the strips, black on the white page.
+    _set_color(pdf, 0)
+    _draw_calibration(pdf, margin_x, top + 4.0)
+    return bytes(pdf.output())
 
-    def py(y):  # model y (from strip top) to page y
-        return top + y
 
-    _draw_title(pdf, model, margin_x)
-
+def _draw_strip(pdf, model, margin_x, top):
     # The strip is a black field with everything on it in white, like the metal
     # original. Fill it black, then draw the marks, text, and slots in white.
+    def px(x):
+        return margin_x + x
+
+    def py(y):
+        return top + y
+
     _draw_outline(pdf, model, px, py)
     _set_color(pdf, 255)
     _draw_slots(pdf, model, px, py)
     _draw_infinity_line(pdf, model, px, py)
     _draw_rows(pdf, model, px, py)
     _draw_legends(pdf, model, px, py)
-
-    # The calibration block sits off the strip, black on the white page.
     _set_color(pdf, 0)
-    _draw_calibration(pdf, margin_x, top + model.outline.width_mm + 16.0)
-
-    return bytes(pdf.output())
 
 
 def _set_color(pdf, level):
@@ -61,13 +77,18 @@ def _set_color(pdf, level):
     pdf.set_text_color(level)
 
 
-def _draw_title(pdf, model, x):
+def _draw_title(pdf, models, x):
     pdf.set_font("Helvetica", size=9)
-    if model.debug:
-        what = "Debug strip: helicoid extension in mm past infinity"
+    focals = [r.focal_length for m in models for r in m.rows if r.focal_length is not None]
+    unit = next((m.unit for m in models if m.unit is not None), None)
+    has_debug = any(m.debug for m in models)
+    if focals:
+        lenses = ", ".join(str(f) for f in focals)
+        what = f"Bronica S2 focusing scale  {unit.value.capitalize()}  {lenses} mm"
+        if has_debug:
+            what += "  + extension strip"
     else:
-        focals = ", ".join(str(r.focal_length) for r in model.rows)
-        what = f"Bronica S2 focusing scale  {model.unit.value.capitalize()}  {focals} mm"
+        what = "Bronica S2 helicoid extension strip (mm)"
     pdf.text(x, 12.0, what)
     pdf.set_font("Helvetica", size=7)
     pdf.text(x, 16.5, "Print at 100% (actual size). Check the lines below with a ruler.")
@@ -89,8 +110,17 @@ def _draw_slots(pdf, model, px, py):
                  round_corners=True, corner_radius=s.width_mm / 2.0)
 
 
+def _mark_font_pt(model):
+    # Numbers grow as the rows do: a one-row strip (the debug strip) gets the
+    # biggest, three rows the smallest, capped so they never swamp the strip.
+    n = max(1, len(model.rows))
+    row_h = (model.outline.width_mm - 2 * _ROW_MARGIN_MM) / n
+    return min(_MAX_MARK_MM, 0.74 * row_h) * _PT_PER_MM
+
+
 def _draw_rows(pdf, model, px, py):
-    pdf.set_font("Helvetica", size=_FONT_PT)
+    font_pt = _mark_font_pt(model)
+    pdf.set_font("Helvetica", size=font_pt)
     for row in model.rows:
         yc = row.y_center_mm
         for mark in row.marks:
@@ -99,7 +129,7 @@ def _draw_rows(pdf, model, px, py):
                 continue
             _dot(pdf, px(mark.x_mm), py(yc))
             if mark.label:
-                pdf.text(px(mark.x_mm) + _LABEL_GAP_MM, py(yc) + _FONT_PT * 0.18,
+                pdf.text(px(mark.x_mm) + _LABEL_GAP_MM, py(yc) + font_pt * 0.18,
                          mark.label)
 
 

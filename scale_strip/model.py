@@ -80,10 +80,12 @@ def _row_centers(n: int) -> list[float]:
 
 
 def build_model(unit, focal_lengths, *, debug=False, hf=None) -> StripModel:
-    """Build the strip for a unit and up to three focal lengths.
+    """Build one strip: focus scales for the focal lengths, or the debug strip.
 
-    ``debug=True`` ignores the focal lengths and produces the extension strip:
-    one row reading 0 mm at infinity to 14 mm at full travel.
+    Each focal length gets a row, shortest at the top. ``debug=True`` returns the
+    extension reference strip instead: one row in millimeters, reading 0 at
+    infinity to the full travel. It stands alone. The website and command line
+    render a focus strip and a debug strip into one PDF when both are wanted.
     """
     outline = Outline(config.STRIP_LEN_MM, config.STRIP_W_MM, config.CORNER_R_MM)
     slots = _slots()
@@ -96,16 +98,17 @@ def build_model(unit, focal_lengths, *, debug=False, hf=None) -> StripModel:
         return StripModel(None, [row], outline, slots, legend_left, legend_right,
                           "mm", geometry.x_infinity(), debug=True)
 
-    unit = unit if isinstance(unit, Unit) else Unit(unit)
+    unit_obj = unit if isinstance(unit, Unit) else Unit(unit)
     hf = hf or config.HF_MM
     focals = sorted(set(int(f) for f in focal_lengths))
+    if not focals:
+        raise ValueError("no focal lengths given")
     centers = _row_centers(len(focals))
 
-    rows = []
-    for f, y in zip(focals, centers):
-        rows.append(Row(f, y, str(f), _lens_marks(f, unit, hf.get(f, 0.0))))
-    return StripModel(unit, rows, outline, slots, legend_left, legend_right,
-                      unit.symbol, geometry.x_infinity())
+    rows = [Row(f, y, str(f), _lens_marks(f, unit_obj, hf.get(f, 0.0)))
+            for f, y in zip(focals, centers)]
+    return StripModel(unit_obj, rows, outline, slots, legend_left, legend_right,
+                      unit_obj.symbol, geometry.x_infinity())
 
 
 def _lens_marks(f: int, unit: Unit, hf: float) -> list[Mark]:

@@ -42,3 +42,4 @@ button {
 }
 button:hover { background: #cfcfcf; }
 a { color: #00309a; }
+.focal { margin: 3px 0; }

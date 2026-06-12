@@ -25,50 +25,49 @@ def _parse_args(argv):
     p.add_argument("--out", default="./out", help="output directory")
     p.add_argument("--page", choices=["letter", "a4"], default="letter")
     p.add_argument("--debug", action="store_true",
-                   help="produce the extension strip instead of focus scales")
+                   help="add an mm extension reference row (alone, or with focal lengths)")
     return p.parse_args(argv)
 
 
 def _validate(args):
-    if args.debug:
-        return
-    if args.unit is None:
-        raise SystemExit("error: --unit is required unless --debug")
-    if not args.focal:
+    if not args.focal and not args.debug:
         raise SystemExit("error: give one to three --focal values, or use --debug")
-    if len(args.focal) > config.MAX_FOCAL_CHOICES:
-        raise SystemExit(f"error: at most {config.MAX_FOCAL_CHOICES} focal lengths")
-    unknown = [f for f in args.focal if f not in config.FOCAL_LENGTHS_MM]
-    if unknown:
-        allowed = ", ".join(str(f) for f in config.FOCAL_LENGTHS_MM)
-        raise SystemExit(f"error: unsupported focal length(s) {unknown}; choose from {allowed}")
-
-
-def _basename(args):
-    if args.debug:
-        return "debug"
-    focals = "_".join(str(f) for f in sorted(set(args.focal)))
-    return f"{args.unit}_{focals}"
+    if args.focal:
+        if args.unit is None:
+            raise SystemExit("error: --unit is required with focal lengths")
+        if len(args.focal) > config.MAX_FOCAL_CHOICES:
+            raise SystemExit(f"error: at most {config.MAX_FOCAL_CHOICES} focal lengths")
+        unknown = [f for f in args.focal if f not in config.FOCAL_LENGTHS_MM]
+        if unknown:
+            allowed = ", ".join(str(f) for f in config.FOCAL_LENGTHS_MM)
+            raise SystemExit(f"error: unsupported focal length(s) {unknown}; choose from {allowed}")
+    elif args.format in ("dxf", "both"):
+        raise SystemExit("error: DXF needs a focal length; --debug is PDF only")
 
 
 def main(argv=None):
     args = _parse_args(sys.argv[1:] if argv is None else argv)
     _validate(args)
 
-    unit = None if args.debug else Unit(args.unit)
-    model = build_model(unit, args.focal, debug=args.debug)
+    focal_model = build_model(Unit(args.unit), args.focal) if args.focal else None
+    debug_model = build_model(None, [], debug=True) if args.debug else None
+    strips = [m for m in (focal_model, debug_model) if m is not None]
+    if args.focal:
+        dxf_base = f"{args.unit}_" + "_".join(str(f) for f in sorted(set(args.focal)))
+        pdf_base = f"{dxf_base}_debug" if args.debug else dxf_base
+    else:
+        dxf_base, pdf_base = None, "debug"
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    base = _basename(args)
     written = []
     if args.format in ("pdf", "both"):
-        path = out / f"{base}.pdf"
-        path.write_bytes(render_pdf(model, page=args.page))
+        path = out / f"{pdf_base}.pdf"
+        path.write_bytes(render_pdf(strips, page=args.page))
         written.append(path)
     if args.format in ("dxf", "both"):
-        path = out / f"{base}.dxf"
-        path.write_bytes(render_dxf(model))
+        path = out / f"{dxf_base}.dxf"
+        path.write_bytes(render_dxf(focal_model))
         written.append(path)
 
     for path in written:

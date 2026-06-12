@@ -28,6 +28,14 @@ def test_pdf_debug_renders():
     assert data[:4] == b"%PDF"
 
 
+def test_pdf_two_strips_render():
+    # A focus strip and the debug strip on one page; no stray "None" in the title.
+    strips = [build_model(Unit.METERS, [50, 75]), build_model(None, [], debug=True)]
+    data = render_pdf(strips)
+    assert data[:4] == b"%PDF"
+    assert b"None" not in data
+
+
 def test_dxf_structure_and_layers():
     text = render_dxf(build_model(Unit.METERS, [50, 75, 150])).decode("ascii")
     assert text.startswith("0\nSECTION")

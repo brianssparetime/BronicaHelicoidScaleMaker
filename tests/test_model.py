@@ -48,6 +48,18 @@ def test_debug_strip():
     assert xs[-1] == pytest.approx(geometry.x_mfd())
 
 
+def test_debug_is_a_standalone_strip():
+    # The debug strip stands alone, one mm row; combining happens at render time.
+    m = build_model(None, [], debug=True)
+    assert m.debug and len(m.rows) == 1 and m.unit is None
+    assert m.rows[0].legend == "mm"
+
+
+def test_build_model_requires_focal_lengths():
+    with pytest.raises(ValueError):
+        build_model(Unit.METERS, [])
+
+
 def test_single_and_triple_focal():
     assert len(build_model(Unit.METERS, [75]).rows) == 1
     assert len(build_model(Unit.METERS, [50, 75, 150]).rows) == 3
