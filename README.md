@@ -1,12 +1,22 @@
 # Bronica S2 focusing scale generator
 
-Generate focusing scale strips for the Bronica S2 helicoid. Pick a unit and one
-to three focal lengths; get a print-ready PDF and/or a laser-ready DXF.
+The Bronica S2 series uses a helicoid separate from the camera.  The focusing scale is a thin metal strip, secured to the helicoid with three tiny screws.
 
-The focal lengths offered: 40, 45, 50, 75, 80, 85, 100, 105, 135, 150, 200.
+The stock scale can combine up to four focal lengths on one scale, but there are only a few variations of it, and it sucks for you if the lenses you use most don't appear on them.
 
-Unlike the stock strip that holds two rows each with two colors (white and red), this
-generator will produce up to three rows in a single color.
+![Focusing scale](img/IMGP7419m.jpeg)
+
+This tool lets you pick one to three lens focal lengths (and your units between feet and meters).
+
+It generates for you a strip with the scale(s) for those focal length(s), sized to be a perfect replacement for the stock ones.
+
+For printing to paper, there's a PDF output (with size calibration scale - make sure you're printing at 100% scale!).  I've found that paper glued to a brass strip and sealed with a sealer spray works pretty well.  However, if you'd rather go for an engraved metal one directly, there's also DXF output.
+
+Use debug for a strip showing bare helicoid extension.
+
+The scales generated match the stock ones, as well as the additional scales provided in the S2 and EC manuals.
+Only the 45, 85, and 105mm scales are worked out by extrapolation.
+
 
 **I have deployed this app at https://brianssparetime.pythonanywhere.com/** so you can use it directly.
 

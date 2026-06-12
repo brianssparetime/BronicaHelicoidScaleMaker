@@ -24,7 +24,9 @@ from scale_strip.units import Unit
 
 app = Bottle()
 
-_STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_STATIC_DIR = os.path.join(_HERE, "static")
+_IMG_DIR = os.path.join(_HERE, "img")
 
 _FOCAL_OPTIONS = "".join(
     f'<option value="{f}">{f}</option>' for f in config.FOCAL_LENGTHS_MM
@@ -42,6 +44,7 @@ def _page():
 <p>The focusing scale is a thin metal strip, secured to the helicoid with three tiny screws.</p>
 <p>The stock scale can combine up to four focal lengths on one scale, but there are only a few variations
 of it, and it sucks for you if the lenses you use most don't appear on them.</p>
+<p><img src="/img/IMGP7419m.jpeg" alt="Focusing scale"></p>
 <p><b>This tool lets you pick one to three lens focal lengths (and your units between feet and meters).
 It generates for you a strip with the scale(s) for those focal length(s), sized to be a perfect replacement
 for the stock ones.</b></p>
@@ -49,6 +52,10 @@ for the stock ones.</b></p>
 100% scale!).  I've found that paper glued to a brass strip and sealed with a sealer spray works pretty well.</p>
 <p>However, if you'd rather go for an engraved metal one directly, there's also DXF output.</p>
 <p>Use debug for a strip showing bare helicoid extension.</p>
+<p>The code running this site is available <a href="https://github.com/brianssparetime/BronicaHelicoidScaleMaker">here</a>.
+You can run it locally, or just generate scale strips straight from the commandline.</p>
+<p>The scales generated match the stock ones, as well as the additional scales provided in the S2 and EC manuals.
+Only the 45, 85, and 105mm scales are worked out by extrapolation.</p>
 <form method="post" action="/generate">
 <table>
 <tr><th>Unit</th><td>
@@ -86,6 +93,11 @@ def index():
 @app.get("/static/<name>")
 def static(name):
     return static_file(name, root=_STATIC_DIR)
+
+
+@app.get("/img/<name>")
+def image(name):
+    return static_file(name, root=_IMG_DIR)
 
 
 @app.post("/generate")
