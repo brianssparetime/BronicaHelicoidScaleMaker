@@ -8,6 +8,10 @@ The focal lengths offered: 40, 45, 50, 75, 80, 85, 100, 105, 135, 150, 200.
 Unlike the stock strip that holds two rows each with two colors (white and red), this
 generator will produce up to three rows in a single color.
 
+**I have deployed this app at https://brianssparetime.pythonanywhere.com/** so you can use it directly.
+
+This page is for running it locally (either as a webserver or as a commandline tool).
+
 ## Output
 
 The PDF includess a 1 cm and a 1 inch reference line (you must change print size to 100%; not the default fit-to-page).  Check them with a ruler before trusting the strip. 
@@ -40,9 +44,9 @@ strip.
 ## Website
 
 ```
-.venv/bin/python web.py
+.venv/bin/python web.py --port 8085
 ```
 
-Serves a form at http://localhost:8080 and streams the result as a download.
+Serves a form at http://localhost:8085 and streams the result as a download.
 
 
