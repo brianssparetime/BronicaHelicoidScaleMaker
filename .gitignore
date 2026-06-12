@@ -13,3 +13,5 @@ img-processed/
 .DS_Store
 **/.DS_Store
 deploy/
+tests/
+requirements-dev.txt
